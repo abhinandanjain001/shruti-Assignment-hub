@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Database representation of a registered student or work professional",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full name" },
+        "phone": { "type": "string", "description": "Contact number" },
+        "role": { "type": "string", "description": "student, professional, or admin" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Order": {
+      "title": "Academic Order",
+      "description": "Details about a requested homework, assignment, or project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string", "description": "UID of ordering student (can be guest)" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "subject": { "type": "string" },
+        "academicLevel": { "type": "string" },
+        "projectType": { "type": "string" },
+        "deadline": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "message": { "type": "string" },
+        "fileUrl": { "type": "string", "description": "Optional file upload path or URL link" },
+        "fileName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed", "cancelled"] },
+        "adminNotes": { "type": "string" },
+        "quotedPrice": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "subject", "academicLevel", "projectType", "status"]
+    },
+    "Lead": {
+      "title": "Contact Lead",
+      "description": "Form submission from contact section",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "contacted", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "Project": {
+      "title": "Featured Project Portfolio",
+      "description": "Showcase projects complete with description, domain, and tools",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "technologies": { "type": "array" },
+        "academicLevel": { "type": "string" },
+        "gradeReceived": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "technologies"]
+    },
+    "Testimonial": {
+      "title": "Student Testimonial",
+      "description": "Success stories and feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentName": { "type": "string" },
+        "course": { "type": "string" },
+        "academicLevel": { "type": "string" },
+        "rating": { "type": "number" },
+        "review": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentName", "rating", "review"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles with identities"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Details, constraints and budgets of user projects"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Contact form general requests"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Admin-managed showcase projects"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "Testimonial",
+      "description": "Feedback and success messages"
+    }
+  }
+}

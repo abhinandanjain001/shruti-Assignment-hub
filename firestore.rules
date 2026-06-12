@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud_firestore {
+  match /databases/{database}/documents {
+
+    // Catch-All Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'google.com');
+    }
+
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'shrutiassignmenthelpers@gmail.com' ||
+        request.auth.token.email == 'abhinandanjain.cse27@jecrc.ac.in' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isUser(userId) || isAdmin());
+      allow create: if isSignedIn() && isUser(userId) && 
+                      request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+                      request.resource.data.role != 'admin'; // Prevent self-appointing admin role
+      allow update: if isSignedIn() && (isUser(userId) || isAdmin()) &&
+                      // Prevent non-admins from changing their role
+                      (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      allow delete: if isAdmin();
+    }
+
+    // --- Orders Collection ---
+    match /orders/{orderId} {
+      allow read: if isAdmin() || 
+                    (isSignedIn() && (
+                      resource.data.userId == request.auth.uid || 
+                      resource.data.email == request.auth.token.email
+                    ));
+      allow create: if true; // Any visitor (guest or authenticated) can submit requirements/quotes
+      allow update: if isAdmin() || (
+                      isSignedIn() && 
+                      resource.data.userId == request.auth.uid &&
+                      // Only allow students to cancel or update basic requirements before in-progress state
+                      resource.data.status == 'pending' &&
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'quotedPrice', 'adminNotes'])
+                    );
+      allow delete: if isAdmin();
+    }
+
+    // --- Leads Collection ---
+    match /leads/{leadId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if true; // Public contact form submission
+    }
+
+    // --- Projects Collection (Portfolio) ---
+    match /projects/{projectId} {
+      allow read: if true; // Publicly accessible portfolio
+      allow write: if isAdmin();
+    }
+
+    // --- Testimonials Collection ---
+    match /testimonials/{testimonialId} {
+      allow read: if true; // Publicly accessible reviews
+      allow create: if isSignedIn(); // Allow registered students to draft feedback
+      allow update, delete: if isAdmin();
+    }
+  }
+}
